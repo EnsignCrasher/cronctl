@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2021 Julian Heuking
 
 run_install_internal() {
 	local _method="${1}"
@@ -19,7 +21,6 @@ run_install_internal() {
 run_install() {
 	run_install_internal exec "$@"
 }
-
 
 run_update() {
 	cat "${script_path}/crontab.d/"* | crontab -
@@ -44,7 +45,8 @@ run_install_once() {
 	local _cron_file="${2}"
 	shift 2
 
-	local _due_time="$(date -d"${_time}" '+%M %H')"
+	local _due_time
+	_due_time="$(date -d"${_time}" '+%M %H')"
 	run_install_internal exec-once "${_due_time} * * *" "${_cron_file}" "$@"
 }
 
@@ -69,7 +71,7 @@ case "${mode}" in
 		run_exec "$@"
 		;;
 	install-once)
-		run_install_once "$@"	
+		run_install_once "$@"
 		;;
 	install)
 		run_install "$@"
