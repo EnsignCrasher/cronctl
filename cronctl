@@ -13,8 +13,12 @@ run_install_internal() {
 	local _cron_file="${3}"
 	shift 3
 	local _cmd="$*"
+
+	local _abs_script_path
+	_abs_script_path="$(realpath "${0}")"
+
 	tee "${crontab_d}/${_cron_file}" <<- EOF
-		${_time_spec} /home/julianh/scripts/cronctl "${_method}" "${_cron_file}" --logfile="${_cron_file}" ${_cmd}
+		${_time_spec} "${_abs_script_path}" "${_method}" "${_cron_file}" --logfile="${_cron_file}" ${_cmd}
 	EOF
 	if ! run_update; then
 		rm -f "${crontab_d}/${_cron_file}"
@@ -68,7 +72,6 @@ config="${HOME}/.config/cronctl/config"
 if test -r "${config}"; then
 	. "${config}"
 fi
-
 
 mode="${1?Missing mode}"
 shift
