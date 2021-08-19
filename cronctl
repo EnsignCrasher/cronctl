@@ -8,11 +8,11 @@ run_install_internal() {
 	local _cron_file="${3}"
 	shift 3
 	local _cmd="$*"
-	tee "/home/julianh/scripts/crontab.d/${_cron_file}" <<- EOF
+	tee "${crontab_d}/${_cron_file}" <<- EOF
 		${_time_spec} /home/julianh/scripts/cronctl "${_method}" "${_cron_file}" --logfile="${_cron_file}" ${_cmd}
 	EOF
 	if ! run_update; then
-		rm -f "/home/julianh/scripts/crontab.d/${_cron_file}"
+		rm -f "${crontab_d}/${_cron_file}"
 		printf 'cronctl update failed' >&2
 		exit 1
 	fi
@@ -23,7 +23,7 @@ run_install() {
 }
 
 run_update() {
-	cat "${script_path}/crontab.d/"* | crontab -
+	cat "${crontab_d}/"* | crontab -
 }
 
 run_exec() {
@@ -54,6 +54,9 @@ set -e
 set -u
 
 script_path="$(cd "$(dirname "${0}")" && pwd)"
+crontab_d="${HOME}/.config/cronctl/crontab.d"
+mkdir -p "${crontab_d}"
+
 mode="${1?Missing mode}"
 shift
 
@@ -65,7 +68,7 @@ case "${mode}" in
 		run_exec "$@"
 		;;
 	exec-once)
-		rm -f "${script_path}/crontab.d/${1?Missing crontab file}"
+		rm -f "${crontab_d}/${1?Missing crontab file}"
 		shift
 		run_update
 		run_exec "$@"
