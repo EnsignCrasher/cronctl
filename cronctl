@@ -1,0 +1,77 @@
+#!/bin/sh
+
+run_install_internal() {
+	local _method="${1}"
+	local _time_spec="${2}"
+	local _cron_file="${3}"
+	shift 3
+	local _cmd="$*"
+	tee "/home/julianh/scripts/crontab.d/${_cron_file}" <<- EOF
+		${_time_spec} /home/julianh/scripts/cronctl "${_method}" "${_cron_file}" --logfile="${_cron_file}" ${_cmd}
+	EOF
+	if ! run_update; then
+		rm -f "/home/julianh/scripts/crontab.d/${_cron_file}"
+		printf 'cronctl update failed' >&2
+		exit 1
+	fi
+}
+
+run_install() {
+	run_install_internal exec "$@"
+}
+
+
+run_update() {
+	cat "${script_path}/crontab.d/"* | crontab -
+}
+
+run_exec() {
+	export PATH="${PATH}:${script_path}:/usr/bin"
+	if printf '%s\n' "${1}" | grep -qE "^--logfile="; then
+		logfile="${script_path}/cronlogs/${1#*--logfile=}"
+		shift
+	else
+		logfile="${script_path}/cronlogs/$(basename "${1}")"
+	fi
+	printf 'Running "%s" at %s...\n' "$*" "$(date +%FT%T)" >> "${logfile}"
+	if ! "$@" >> "${logfile}" 2>&1; then
+		printf '%s\n' "$@" | home-email "cronjob failed!"
+	fi
+}
+
+run_install_once() {
+	local _time="${1}"
+	local _cron_file="${2}"
+	shift 2
+
+	local _due_time="$(date -d"${_time}" '+%M %H')"
+	run_install_internal exec-once "${_due_time} * * *" "${_cron_file}" "$@"
+}
+
+set -e
+set -u
+
+script_path="$(cd "$(dirname "${0}")" && pwd)"
+mode="${1?Missing mode}"
+shift
+
+case "${mode}" in
+	update)
+		run_update
+		;;
+	exec)
+		run_exec "$@"
+		;;
+	exec-once)
+		rm -f "${script_path}/crontab.d/${1?Missing crontab file}"
+		shift
+		run_update
+		run_exec "$@"
+		;;
+	install-once)
+		run_install_once "$@"	
+		;;
+	install)
+		run_install "$@"
+		;;
+esac
