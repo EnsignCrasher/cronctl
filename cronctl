@@ -3,9 +3,10 @@
 # Copyright (C) 2021 Julian Heuking
 
 send_email() {
+	local _subject="${1}"
 	# shellcheck disable=2086
 	mutt ${CRONCTL_EMAIL_RECEIVER?Missing config option CRONCTL_EMAIL_RECEIVER} \
-		-s "cronjob failed!"
+		-s "${_subject}"
 }
 
 run_install_internal() {
@@ -49,7 +50,9 @@ run_exec() {
 	fi
 	printf 'Running "%s" at %s...\n' "$*" "$(date +%FT%T)" >> "${logfile}"
 	if ! "$@" >> "${logfile}" 2>&1; then
-		printf '%s\n' "$@" | send_email
+		printf '%s\n' "$@" | send_email "cronjob failed!"
+	elif "${CRONCTL_NOTIFY_ALWAYS:-false}"; then
+		printf '%s\n' "$@" | send_email "cronjob succeeded!"
 	fi
 }
 
