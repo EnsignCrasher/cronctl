@@ -2,6 +2,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2021 Julian Heuking
 
+send_email() {
+	mutt ${CRONCTL_EMAIL_RECEIVER?Missing config option CRONCTL_EMAIL_RECEIVER} \
+		-s "cronjob failed!"
+}
+
 run_install_internal() {
 	local _method="${1}"
 	local _time_spec="${2}"
@@ -39,7 +44,7 @@ run_exec() {
 	fi
 	printf 'Running "%s" at %s...\n' "$*" "$(date +%FT%T)" >> "${logfile}"
 	if ! "$@" >> "${logfile}" 2>&1; then
-		printf '%s\n' "$@" | home-email "cronjob failed!"
+		printf '%s\n' "$@" | send_email
 	fi
 }
 
@@ -58,6 +63,12 @@ set -u
 
 crontab_d="${HOME}/.config/cronctl/crontab.d"
 mkdir -p "${crontab_d}"
+
+config="${HOME}/.config/cronctl/config"
+if test -r "${config}"; then
+	. "${config}"
+fi
+
 
 mode="${1?Missing mode}"
 shift
