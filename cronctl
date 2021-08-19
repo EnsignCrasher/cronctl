@@ -3,6 +3,7 @@
 # Copyright (C) 2021 Julian Heuking
 
 send_email() {
+	# shellcheck disable=2086
 	mutt ${CRONCTL_EMAIL_RECEIVER?Missing config option CRONCTL_EMAIL_RECEIVER} \
 		-s "cronjob failed!"
 }
@@ -70,6 +71,7 @@ mkdir -p "${crontab_d}"
 
 config="${HOME}/.config/cronctl/config"
 if test -r "${config}"; then
+	# shellcheck disable=1090
 	. "${config}"
 fi
 
