@@ -27,12 +27,15 @@ run_update() {
 }
 
 run_exec() {
-	export PATH="${PATH}:${script_path}:/usr/bin"
+	local _cronlogs="${HOME}/.local/cronctl/logs"
+	mkdir -p "${_cronlogs}"
+
+	export PATH="${PATH}:/usr/local/bin:/usr/bin"
 	if printf '%s\n' "${1}" | grep -qE "^--logfile="; then
-		logfile="${script_path}/cronlogs/${1#*--logfile=}"
+		logfile="${_cronlogs}/${1#*--logfile=}"
 		shift
 	else
-		logfile="${script_path}/cronlogs/$(basename "${1}")"
+		logfile="${_cronlogs}/$(basename "${1}")"
 	fi
 	printf 'Running "%s" at %s...\n' "$*" "$(date +%FT%T)" >> "${logfile}"
 	if ! "$@" >> "${logfile}" 2>&1; then
@@ -53,7 +56,6 @@ run_install_once() {
 set -e
 set -u
 
-script_path="$(cd "$(dirname "${0}")" && pwd)"
 crontab_d="${HOME}/.config/cronctl/crontab.d"
 mkdir -p "${crontab_d}"
 
