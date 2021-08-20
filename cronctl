@@ -2,6 +2,62 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2021 Julian Heuking
 
+usage() {
+	local _name
+	_name="$(realpath "${0}")"
+	cat >&2 << EOF
+${_name}: improved cronjobs
+
+Usage:
+	${_name} update
+		replaces your crontab with everything which can be found in
+		${config}
+
+	${_name} exec [ --logfile=<name> ] CMD ..
+		wrapper to use in cronjobs. This writes the output of your
+		command into a file in ${cronlogs}.
+		If --logfile is not specified, the first argument in CMD will
+		be used as name for the log file.
+		This command sends notifications with mutt. It expects to find
+		email addresses specified which 'CRONCTL_EMAIL_RECEIVER'.
+		This can be set in the config file:
+		${config}
+
+	${_name} exec-once <cronjob-name> [ --logfile=<name> ] CMD ..
+		This is basically the same as 'exec', however the
+		<cronjob-name> will be removed from
+		${crontab_d} after the first execution.
+
+	${_name} install <timespec> <cronjob-name> CMD ..
+		installs the given CMD in
+		${crontab_d}/<cronjob-name> with the given cron <timespec>.
+		'update' is executed automatically right away.
+
+	${_name} install-once <time> <cronjob-name> CMD ..
+		installs the given command to run once at the time specified
+		with <time>. This command uses the date utility to convert
+		<time> into a cron timespec.
+		Only hour and minute is extracted from <time> though, which
+		limits the time range. However you can also specify things
+		like 'now + 5 min'
+
+FILES
+	${crontab_d}
+		files in this directory are used to update crontab
+	${config}
+		cronctl config file
+	${cronlogs}
+		log files of executed cronjobs are stored in this directory
+
+CONFIG OPTIONS
+	CRONCTL_EMAIL_RECEIVER
+		list of email addresses which will be notified by 'exec' command
+	CRONCTL_NOTIFY_ALWAYS
+		if set to 'true', notifications are also sent for successful
+		cronjobs
+EOF
+}
+
 send_email() {
 	local _subject="${1}"
 	# shellcheck disable=2086
@@ -38,15 +94,14 @@ run_update() {
 }
 
 run_exec() {
-	local _cronlogs="${HOME}/.local/cronctl/logs"
-	mkdir -p "${_cronlogs}"
+	mkdir -p "${cronlogs}"
 
 	export PATH="${PATH}:/usr/local/bin:/usr/bin"
 	if printf '%s\n' "${1}" | grep -qE "^--logfile="; then
-		logfile="${_cronlogs}/${1#*--logfile=}"
+		logfile="${cronlogs}/${1#*--logfile=}"
 		shift
 	else
-		logfile="${_cronlogs}/$(basename "${1}")"
+		logfile="${cronlogs}/$(basename "${1}")"
 	fi
 	printf 'Running "%s" at %s...\n' "$*" "$(date +%FT%T)" >> "${logfile}"
 	if ! "$@" >> "${logfile}" 2>&1; then
@@ -72,13 +127,15 @@ set -u
 crontab_d="${HOME}/.config/cronctl/crontab.d"
 mkdir -p "${crontab_d}"
 
+cronlogs="${HOME}/.local/cronctl/logs"
+
 config="${HOME}/.config/cronctl/config"
 if test -r "${config}"; then
 	# shellcheck disable=1090
 	. "${config}"
 fi
 
-mode="${1?Missing mode}"
+mode="${1?Missing mode$(usage)}"
 shift
 
 case "${mode}" in
@@ -89,7 +146,7 @@ case "${mode}" in
 		run_exec "$@"
 		;;
 	exec-once)
-		rm -f "${crontab_d}/${1?Missing crontab file}"
+		rm -f "${crontab_d}/${1?Missing crontab file$(usage)}"
 		shift
 		run_update
 		run_exec "$@"
