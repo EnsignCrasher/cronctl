@@ -75,9 +75,16 @@ run_install_internal() {
 	local _abs_script_path
 	_abs_script_path="$(realpath "${0}")"
 
-	tee "${crontab_d}/${_cron_file}" <<- EOF
-		${_time_spec} "${_abs_script_path}" "${_method}" "${_cron_file}" --logfile="${_cron_file}" ${_cmd}
-	EOF
+	if test "${_method}" = "exec"; then
+		tee "${crontab_d}/${_cron_file}" <<- EOF
+			${_time_spec} "${_abs_script_path}" exec --logfile="${_cron_file}" ${_cmd}
+		EOF
+	elif test "${_method}" = "exec-once"; then
+		tee "${crontab_d}/${_cron_file}" <<- EOF
+			${_time_spec} "${_abs_script_path}" exec-once "${_cron_file}" --logfile="${_cron_file}" ${_cmd}
+		EOF
+	fi
+
 	if ! run_update; then
 		rm -f "${crontab_d}/${_cron_file}"
 		printf 'cronctl update failed' >&2
