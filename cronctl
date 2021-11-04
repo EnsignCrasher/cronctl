@@ -60,9 +60,11 @@ EOF
 
 send_email() {
 	local _subject="${1}"
+	local _hostname
+	_hostname="$(hostname)"
 	# shellcheck disable=2086
 	mutt ${CRONCTL_EMAIL_RECEIVER?Missing config option CRONCTL_EMAIL_RECEIVER} \
-		-s "${_subject}"
+		-s "${_hostname}: ${_subject}"
 }
 
 run_install_internal() {
