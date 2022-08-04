@@ -107,17 +107,26 @@ run_exec() {
 
 	export PATH="${PATH}:/usr/local/bin:/usr/bin"
 	if printf '%s\n' "${1}" | grep -qE "^--logfile="; then
-		logfile="${cronlogs}/${1#*--logfile=}"
+		logdir="${cronlogs}/${1#*--logfile=}/$(date +%FT%TZ)"
 		shift
 	else
-		logfile="${cronlogs}/$(basename "${1}")"
+		logdir="${cronlogs}/$(basename "${1}")/$(date +%FT%TZ)"
 	fi
+	mkdir -p "${logdir}"
+
+	logfile="$(mktemp)"
 	printf 'Running "%s" at %s...\n' "$*" "$(date +%FT%T)" >> "${logfile}"
 	if ! "$@" >> "${logfile}" 2>&1; then
-		printf '%s\n' "$@" | send_email "cronjob failed!"
-	elif "${CRONCTL_NOTIFY_ALWAYS:-false}"; then
-		printf '%s\n' "$@" | send_email "cronjob succeeded!"
+		(printf '%s\n' "$@"; cat "${logfile}") | send_email "cronjob failed!"
+		mv "${logfile}" "${logdir}/failed"
+		return 1
 	fi
+
+	if "${CRONCTL_NOTIFY_ALWAYS:-false}"; then
+		(printf '%s\n' "$@"; cat "${logfile}") | send_email "cronjob succeeded!"
+	fi
+
+	mv "${logfile}" "${logdir}/succeeded"
 }
 
 run_install_once() {
