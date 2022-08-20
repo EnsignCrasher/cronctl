@@ -1,0 +1,15 @@
+Source: cronctl
+Section: admin
+Priority: optional
+Maintainer: Julian Heuking <jheuking@googlemail.com>
+Build-Depends: debhelper (>=11~)
+Standards-Version: 4.1.4
+
+Package: cronctl
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: better cronjobs
+ in additon to normal cron, cronctl provides logs, notifications and
+ installation of cronjobs as files in a directory (crontab.d) which
+ makes dynamic adjustments to crontab easy.

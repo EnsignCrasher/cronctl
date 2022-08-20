@@ -1,0 +1,11 @@
+cronctl (0.0.2-1) buster; urgency=medium
+
+  * include hostname in notification email
+
+ -- Julian Heuking <jheuking@googlemail.com>  Thu, 04 Nov 2021 08:29:41 +0100
+
+cronctl (0.0.1-1) buster; urgency=medium
+
+  * Initial release. (Closes: #XXXXXX)
+
+ -- Julian Heuking <jheuking@googlemail.com>  Thu, 19 Aug 2021 17:25:18 +0200
