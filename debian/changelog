@@ -1,3 +1,10 @@
+cronctl (0.0.3-1) bullseye; urgency=medium
+
+  * expand timespan of install-once jobs to within one year
+  * include name of log in mail heading for failed jobs
+
+ -- Julian Heuking <jheuking@googlemail.com>  Sun, 27 Nov 2022 11:55:41 +0100
+
 cronctl (0.0.2-1) buster; urgency=medium
 
   * include hostname in notification email
