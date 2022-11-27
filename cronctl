@@ -139,8 +139,8 @@ run_install_once() {
 	shift 2
 
 	local _due_time
-	_due_time="$(date -d"${_time}" '+%M %H')"
-	run_install_internal exec-once "${_due_time} * * *" "${_cron_file}" "$@"
+	_due_time="$(date -d"${_time}" '+%M %H %d %m')"
+	run_install_internal exec-once "${_due_time} *" "${_cron_file}" "$@"
 }
 
 set -e
