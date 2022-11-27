@@ -118,7 +118,7 @@ run_exec() {
 		(
 			printf '%s\n' "$@"
 			cat "${logfile}"
-		) | send_email "cronjob failed!"
+		) | send_email "cronjob '$(basename "${logdir}")' failed!"
 		mv "${logfile}" "${logdir}/failed"
 		return 1
 	fi
