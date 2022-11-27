@@ -60,11 +60,9 @@ EOF
 
 send_email() {
 	local _subject="${1}"
-	local _hostname
-	_hostname="$(hostname)"
 	# shellcheck disable=2086
 	mutt ${CRONCTL_EMAIL_RECEIVER?Missing config option CRONCTL_EMAIL_RECEIVER} \
-		-s "${_hostname}: ${_subject}"
+		-s "${_subject}"
 }
 
 run_install_internal() {
@@ -117,13 +115,19 @@ run_exec() {
 	logfile="$(mktemp)"
 	printf 'Running "%s" at %s...\n' "$*" "$(date +%FT%T)" >> "${logfile}"
 	if ! "$@" >> "${logfile}" 2>&1; then
-		(printf '%s\n' "$@"; cat "${logfile}") | send_email "cronjob failed!"
+		(
+			printf '%s\n' "$@"
+			cat "${logfile}"
+		) | send_email "cronjob failed!"
 		mv "${logfile}" "${logdir}/failed"
 		return 1
 	fi
 
 	if "${CRONCTL_NOTIFY_ALWAYS:-false}"; then
-		(printf '%s\n' "$@"; cat "${logfile}") | send_email "cronjob succeeded!"
+		(
+			printf '%s\n' "$@"
+			cat "${logfile}"
+		) | send_email "cronjob succeeded!"
 	fi
 
 	mv "${logfile}" "${logdir}/succeeded"
