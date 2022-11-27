@@ -105,11 +105,12 @@ run_exec() {
 
 	export PATH="${PATH}:/usr/local/bin:/usr/bin"
 	if printf '%s\n' "${1}" | grep -qE "^--logfile="; then
-		logdir="${cronlogs}/${1#*--logfile=}/$(date +%FT%TZ)"
+		log_name="${1#*--logfile=}"
 		shift
 	else
-		logdir="${cronlogs}/$(basename "${1}")/$(date +%FT%TZ)"
+		log_name="$(basename "${1}")"
 	fi
+	logdir="${cronlogs}/${log_name}/$(date +%FT%TZ)"
 	mkdir -p "${logdir}"
 
 	logfile="$(mktemp)"
@@ -118,7 +119,7 @@ run_exec() {
 		(
 			printf '%s\n' "$@"
 			cat "${logfile}"
-		) | send_email "cronjob '$(basename "${logdir}")' failed!"
+		) | send_email "cronjob '${log_name}' failed!"
 		mv "${logfile}" "${logdir}/failed"
 		return 1
 	fi
